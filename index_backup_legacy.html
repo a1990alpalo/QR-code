@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Our Work – Home Improvement Portfolio</title>
+  <style>
+    :root{
+      --bg:#e2e2ee; --text:#222; --muted:#666; --brand:#1f7a44; --chip:#e8e8ea;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text); background:var(--bg);
+    }
+    header{
+      padding:28px 16px; text-align:center; background:rgba(226, 226, 236, 0.959); border-bottom:1px solid #2222a8;
+      position:sticky; top:0; z-index:20;
+    }
+    header h1{margin:0 0 6px;font-size:clamp(22px,3.2vw,32px)}
+    header p{margin:0;color:var(--muted)}
+    .toolbar{
+      display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:16px auto 0; max-width:1100px;
+    }
+    .search{
+      flex:1 1 260px; max-width:420px; position:relative;
+    }
+    .search input{
+      width:100%; padding:12px 14px; border:1px solid #ddd; border-radius:12px; font-size:15px; outline:none;
+      background:white;
+    }
+    .chips{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
+    .chip{
+      border:1px solid #ddd; background:var(--chip); color:#111; padding:8px 12px; border-radius:999px;
+      font-weight:600; font-size:14px; cursor:pointer; user-select:none;
+      transition:background .2s, color .2s, border-color .2s;
+    }
+    .chip.active{background:var(--brand); color:white; border-color:transparent}
+    main{max-width:1100px;margin:22px auto;padding:0 16px}
+    .grid{
+      display:grid; gap:14px;
+      grid-template-columns:repeat(auto-fill, minmax(240px,1fr));
+      align-items:stretch;
+    }
+    .card{
+      background:white; border-radius:14px; overflow:hidden; border:1px solid #ececf1;
+      box-shadow:0 1px 2px rgba(0,0,0,.04);
+      display:flex; flex-direction:column;
+      transition:transform .2s, box-shadow .2s;
+    }
+    .card:hover{transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.08)}
+    .thumb{
+      aspect-ratio: 4 / 3; width:100%; object-fit:cover; display:block; background:#f0f0f3;
+    }
+    .body{padding:12px 14px}
+    .title{margin:0 0 6px; font-size:16px}
+    .meta{font-size:12px; color:var(--muted); display:flex; gap:8px; flex-wrap:wrap}
+    .tag{background:#eef5f0; color:#245f3b; padding:2px 8px; border-radius:999px; font-weight:600}
+    .hidden{display:none !important}
+
+    /* Lightbox */
+    .lightbox{
+      position:fixed; inset:0; background:rgba(0,0,0,.86); display:none; z-index:99;
+    }
+    .lightbox.open{display:block}
+    .lb-inner{position:absolute; inset:0; display:grid; place-items:center; padding:24px}
+    .lb-img{max-width:92vw; max-height:82vh; border-radius:10px; background:#111}
+    .lb-caption{color:#fff; text-align:center; margin-top:8px; font-size:14px}
+    .lb-nav{
+      position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between; pointer-events:none;
+    }
+    .lb-btn{
+      pointer-events:auto; width:48px; height:48px; border-radius:50%; border:none; background:rgba(255,255,255,.12);
+      color:#fff; font-size:22px; display:grid; place-items:center; margin:0 10px; cursor:pointer;
+    }
+    .lb-close{
+      position:absolute; top:14px; right:14px; width:44px; height:44px; border-radius:50%;
+      border:none; background:rgba(255,255,255,.18); color:#fff; font-size:20px; cursor:pointer;
+    }
+
+    /* Nice fade-in */
+    .reveal{opacity:0; transform:translateY(12px); transition:all .5s ease}
+    .reveal.show{opacity:1; transform:none}
+
+    /* Floating contact */
+    .contact{
+      position:fixed; right:18px; bottom:18px; z-index:30; text-decoration:none;
+      background:var(--brand); color:#fff; padding:12px 16px; border-radius:999px; font-weight:800;
+      box-shadow:0 6px 20px rgba(31,122,68,.25);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Our Work – Home Improvement Portfolio</h1>
+    <p>Browse projects and filter by category. Click any image to enlarge.</p>
+
+    <div class="toolbar">
+      <div class="chips" id="chips"></div>
+      <div class="search">
+        <input id="search" type="search" placeholder="Search projects (title, tags)…" />
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="grid" class="grid"></section>
+  </main>
+
+  <a class="contact" href="mailto:youremail@example.com">Contact us</a>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox" aria-modal="true" role="dialog">
+    <button class="lb-close" aria-label="Close (Esc)" id="lbClose">✕</button>
+    <div class="lb-nav">
+      <button class="lb-btn" id="lbPrev" aria-label="Previous">‹</button>
+      <button class="lb-btn" id="lbNext" aria-label="Next">›</button>
+    </div>
+    <div class="lb-inner">
+      <img id="lbImg" class="lb-img" alt="" />
+      <div id="lbCap" class="lb-caption"></div>
+    </div>
+  </div>
+
+  <script>
+    // -------------------------
+    // 1) Your project catalog
+    // -------------------------
+    // Add your images here. Use actual file names from the repo.
+    const projects = [
+      {
+        title: "Landscaping Showcase",
+        category: "Landscaping",
+        img: "Our Work_ Home Transformations Showcase.png",
+        tags: ["mulch","beds","yard","exterior"],
+        desc: "Examples of curb-appeal upgrades and garden beds."
+      },
+      {
+        title: "Remodeling Gallery",
+        category: "Remodeling",
+        img: "Nacho Onlyfans 2.0.png",
+        tags: ["kitchen","bathroom","interior","remodel"],
+        desc: "Before/after highlights across kitchens and bathrooms."
+      },
+      {
+        title: "QR / Catalog Sheet",
+        category: "Other",
+        img: "catalog_qr.png",
+        tags: ["qr","flyer"],
+        desc: "Quick link to this portfolio."
+      },
+      // 👉 Add more items like this:
+      // { title: "Kitchen Countertops", category: "Remodeling", img: "kitchen1.jpg", tags:["kitchen","countertops","quartz"], desc:"New quartz counters and backsplash." }
+    ];
+
+    // -------------------------
+    // 2) Derived categories
+    // -------------------------
+    const categories = ["All", ...[...new Set(projects.map(p => p.category))]].sort((a,b)=>{
+      if (a==="All") return -1; if (b==="All") return 1; return a.localeCompare(b);
+    });
+
+    // -------------------------
+    // 3) Render filter chips
+    // -------------------------
+    const chipsEl = document.getElementById("chips");
+    let activeCategory = "All";
+    const renderChips = () => {
+      chipsEl.innerHTML = "";
+      categories.forEach(cat => {
+        const count = cat === "All" ? projects.length : projects.filter(p=>p.category===cat).length;
+        const b = document.createElement("button");
+        b.className = "chip" + (cat===activeCategory ? " active":"");
+        b.textContent = `${cat} (${count})`;
+        b.dataset.cat = cat;
+        b.onclick = () => { activeCategory = cat; renderChips(); renderGrid(); };
+        chipsEl.appendChild(b);
+      });
+    };
+
+    // -------------------------
+    // 4) Render grid
+    // -------------------------
+    const gridEl = document.getElementById("grid");
+    const qEl = document.getElementById("search");
+    let currentIndex = 0; // for lightbox nav
+
+    const matchesQuery = (p, q) => {
+      if (!q) return true;
+      q = q.toLowerCase();
+      return (
+        p.title.toLowerCase().includes(q) ||
+        p.desc?.toLowerCase().includes(q) ||
+        (p.tags || []).some(t => t.toLowerCase().includes(q)) ||
+        p.category.toLowerCase().includes(q)
+      );
+    };
+
+    const renderGrid = () => {
+      const q = qEl.value.trim();
+      const filtered = projects.filter(p => (activeCategory==="All" || p.category===activeCategory) && matchesQuery(p,q));
+      gridEl.innerHTML = "";
+
+      filtered.forEach((p, idx) => {
+        const card = document.createElement("article");
+        card.className = "card reveal";
+
+        const img = document.createElement("img");
+        img.className = "thumb";
+        img.alt = p.title;
+        img.loading = "lazy";
+        // handle spaces safely
+        img.src = encodeURI(p.img);
+
+        img.addEventListener("click", () => openLightbox(filtered, idx));
+
+        const body = document.createElement("div");
+        body.className = "body";
+
+        const h3 = document.createElement("h3");
+        h3.className = "title";
+        h3.textContent = p.title;
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        const cat = document.createElement("span");
+        cat.textContent = p.category;
+        cat.className = "tag";
+        meta.appendChild(cat);
+        (p.tags || []).slice(0,3).forEach(t=>{
+          const s=document.createElement("span"); s.className="tag"; s.textContent=t; meta.appendChild(s);
+        });
+
+        const d = document.createElement("div");
+        d.style.marginTop = "6px";
+        d.style.fontSize = "13px";
+        d.style.color = "var(--muted)";
+        d.textContent = p.desc || "";
+
+        body.append(h3, meta, d);
+        card.append(img, body);
+        gridEl.appendChild(card);
+      });
+
+      revealNow(); // initial fade-in
+      if (filtered.length === 0) {
+        const empty = document.createElement("p");
+        empty.style.color = "var(--muted)";
+        empty.textContent = "No results. Try another filter or search.";
+        gridEl.appendChild(empty);
+      }
+    };
+
+    // -------------------------
+    // 5) Search input
+    // -------------------------
+    qEl.addEventListener("input", () => renderGrid());
+
+    // -------------------------
+    // 6) Lightbox with arrows/ESC
+    // -------------------------
+    const lb = document.getElementById("lightbox");
+    const lbImg = document.getElementById("lbImg");
+    const lbCap = document.getElementById("lbCap");
+    const lbPrev = document.getElementById("lbPrev");
+    const lbNext = document.getElementById("lbNext");
+    const lbClose = document.getElementById("lbClose");
+    let activeList = projects;
+
+    function openLightbox(list, idx){
+      activeList = list;
+      currentIndex = idx;
+      const item = activeList[currentIndex];
+      lbImg.src = encodeURI(item.img);
+      lbImg.alt = item.title;
+      lbCap.textContent = item.title + (item.category ? ` — ${item.category}` : "");
+      lb.classList.add("open");
+      document.body.style.overflow = "hidden";
+    }
+    function closeLightbox(){
+      lb.classList.remove("open"); document.body.style.overflow = "";
+    }
+    function step(dir){
+      if (!activeList.length) return;
+      currentIndex = (currentIndex + dir + activeList.length) % activeList.length;
+      openLightbox(activeList, currentIndex);
+    }
+
+    lbPrev.addEventListener("click", e => { e.stopPropagation(); step(-1); });
+    lbNext.addEventListener("click", e => { e.stopPropagation(); step(1); });
+    lbClose.addEventListener("click", closeLightbox);
+    lb.addEventListener("click", (e)=>{ if (e.target===lb) closeLightbox(); });
+    window.addEventListener("keydown", (e)=>{
+      if (!lb.classList.contains("open")) return;
+      if (e.key === "Escape") closeLightbox();
+      if (e.key === "ArrowLeft") step(-1);
+      if (e.key === "ArrowRight") step(1);
+    });
+
+    // -------------------------
+    // 7) Simple reveal-on-scroll
+    // -------------------------
+    const revealNow = () => {
+      document.querySelectorAll(".reveal").forEach(el=>{
+        const r = el.getBoundingClientRect();
+        if (r.top < innerHeight - 60) el.classList.add("show");
+      });
+    };
+    addEventListener("scroll", revealNow);
+
+    // Init
+    renderChips();
+    renderGrid();
+  </script>
+</body>
+</html>
